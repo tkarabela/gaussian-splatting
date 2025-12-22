@@ -1,3 +1,6 @@
+*Note: This is a fork of the [original repository](https://github.com/graphdeco-inria/gaussian-splatting)
+with updates to run on a Blackwell GPU with up-to-date COLMAP and GCC (status: 12/2025).*
+
 # 3D Gaussian Splatting for Real-Time Radiance Field Rendering
 Bernhard Kerbl*, Georgios Kopanas*, Thomas Leimkühler, George Drettakis (* indicates equal contribution)<br>
 | [Webpage](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) | [Full Paper](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_high.pdf) | [Video](https://youtu.be/T_kXY43VZnk) | [Other GRAPHDECO Publications](http://www-sop.inria.fr/reves/publis/gdindex.php) | [FUNGRAPH project page](https://fungraph.inria.fr) |<br>
@@ -57,12 +60,12 @@ User [camenduru](https://github.com/camenduru) was kind enough to provide a Cola
 The repository contains submodules, thus please check it out with 
 ```shell
 # SSH
-git clone git@github.com:graphdeco-inria/gaussian-splatting.git --recursive
+git clone git@github.com:tkarabela/gaussian-splatting.git --recursive
 ```
 or
 ```shell
 # HTTPS
-git clone https://github.com/graphdeco-inria/gaussian-splatting --recursive
+git clone https://github.com/tkarabela/gaussian-splatting --recursive
 ```
 
 ## Overview
@@ -98,20 +101,13 @@ The optimizer uses PyTorch and CUDA extensions in a Python environment to produc
 
 #### Local Setup
 
-Our default, provided install method is based on Conda package and environment management:
-```shell
-SET DISTUTILS_USE_SDK=1 # Windows only
-conda env create --file environment.yml
-conda activate gaussian_splatting
-```
-Please note that this process assumes that you have CUDA SDK **11** installed, not **12**. For modifications, see below.
-
-Tip: Downloading packages and creating a new environment with Conda can require a significant amount of disk space. By default, Conda will use the main system hard drive. You can avoid this by specifying a different package download location and an environment on a different drive:
+Unlike the original repository, we use uv for package management. Tested with Python 3.13, CUDA 13.1.
 
 ```shell
-conda config --add pkgs_dirs <Drive>/<pkg_path>
-conda env create --file environment.yml --prefix <Drive>/<env_path>/gaussian_splatting
-conda activate <Drive>/<env_path>/gaussian_splatting
+uv sync
+uv pip install --no-build-isolation submodules/diff-gaussian-rasterization
+uv pip install --no-build-isolation submodules/fused-ssim
+uv pip install --no-build-isolation submodules/simple-knn
 ```
 
 #### Modifications
@@ -495,15 +491,7 @@ python convert.py -s <location> --skip_matching [--resize] #If not resizing, Ima
 
 We integrated the drop-in replacements from [Taming-3dgs](https://humansensinglab.github.io/taming-3dgs/)<sup>1</sup> with [fused ssim](https://github.com/rahul-goel/fused-ssim/tree/main) into the original codebase to speed up training times. Once installed, the accelerated rasterizer delivers a **$\times$ 1.6 training time speedup** using `--optimizer_type default` and a **$\times$ 2.7 training time speedup** using `--optimizer_type sparse_adam`.
 
-To get faster training times you must first install the accelerated rasterizer to your environment:
-
-```bash
-pip uninstall diff-gaussian-rasterization -y
-cd submodules/diff-gaussian-rasterization
-rm -r build
-git checkout 3dgs_accel
-pip install .
-```
+In this version of the repository, `diff-gaussian-rasterization` already uses the `3dgs_accel` branch. 
 
 Then you can add the following parameter to use the sparse adam optimizer when running `train.py`:
 
